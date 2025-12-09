@@ -7,7 +7,7 @@ import BatchTab from '@/components/views/BatchTab.vue'
 import NavbarApp from './components/layout/NavbarApp.vue'
 
 const currentTab = ref<'single' | 'batch'>('single')
-const mockMode = ref(true) // Cambiar a false cuando conectes tu backend Python/NestJS
+const mockMode = ref(false) // Cambiar a false cuando conectes tu backend Python/NestJS
 </script>
 
 <template>

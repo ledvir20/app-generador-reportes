@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { toast } from 'vue-sonner' // <-- Importar toast
+import { DocumentService } from '@/api/documentService'
 import { UploadCloud, FileCheck, Loader2, Sparkles, Calendar, Eye, Copy } from 'lucide-vue-next'
 import type { ResolutionResult } from '@/types'
 
-defineProps<{ mockMode: boolean }>()
+const props = defineProps<{ mockMode: boolean }>()
 
 const selectedFile = ref<File | null>(null)
 const singleResult = ref<ResolutionResult | null>(null)
@@ -38,22 +39,28 @@ const processSingle = async () => {
   singleResult.value = null
 
   try {
-    // Simular API
-    await new Promise((r) => setTimeout(r, 1500))
-
-    singleResult.value = {
-      titulo: 'RESOLUCIÓN DE ALCALDÍA Nº 123-2025-MPH',
-      nombre_norma: 'APROBACIÓN DE PRESUPUESTO',
-      descripcion: 'Se resuelve aprobar el presupuesto participativo...',
-      fecha_publicacion: '15/04/2025',
-      publication_type_id: 1,
-      category_id: 54,
-      ocr_usado: true,
-      nombre_archivo_original: selectedFile.value.name,
-      url_acceso_pdf: '#',
+    let data: ResolutionResult
+    if (props.mockMode) {
+      // Modo mock local
+      await new Promise((r) => setTimeout(r, 1500))
+      data = {
+        titulo: 'RESOLUCIÓN DE ALCALDÍA Nº 123-2025-MPH',
+        nombre_norma: 'APROBACIÓN DE PRESUPUESTO',
+        descripcion: 'Se resuelve aprobar el presupuesto participativo...',
+        fecha_publicacion: '15/04/2025',
+        publication_type_id: 1,
+        category_id: 54,
+        ocr_usado: true,
+        nombre_archivo_original: selectedFile.value.name,
+        url_acceso_pdf: '#',
+      }
+    } else {
+      // Llamada real al servicio
+      const result = await DocumentService.processSingle(selectedFile.value)
+      data = result
     }
 
-    // Uso de Sonner Success
+    singleResult.value = data
     toast.success('Análisis Completado', {
       description: 'Se han extraído los datos exitosamente.',
     })

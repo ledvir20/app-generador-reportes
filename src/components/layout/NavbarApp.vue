@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { FileText } from 'lucide-vue-next'
-defineProps<{ mockMode: boolean }>()
+import { ref, onMounted } from 'vue'
+import { FileText, RefreshCw } from 'lucide-vue-next'
+import { DocumentService } from '@/api/documentService'
+
+const props = defineProps<{ mockMode: boolean }>()
+
+const healthStatus = ref<boolean | null>(null) // null = comprobando/unknown, true = ok, false = offline
+const checking = ref(false)
+
+const checkHealth = async () => {
+  if (props.mockMode) return
+  checking.value = true
+  healthStatus.value = null
+  try {
+    const ok = await DocumentService.healthCheck()
+    healthStatus.value = !!ok
+  } catch (e) {
+    healthStatus.value = false
+  } finally {
+    checking.value = false
+  }
+}
+
+onMounted(() => {
+  if (!props.mockMode) checkHealth()
+})
 </script>
 
 <template>
@@ -22,17 +46,36 @@ defineProps<{ mockMode: boolean }>()
       <div class="flex items-center gap-2 text-sm text-slate-500">
         <span class="relative flex h-2 w-2">
           <span
-            v-if="mockMode"
+            v-if="props.mockMode || healthStatus === null"
             class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"
           ></span>
           <span
             :class="[
               'relative inline-flex rounded-full h-2 w-2',
-              mockMode ? 'bg-amber-500' : 'bg-green-500',
+              props.mockMode ? 'bg-amber-500' : healthStatus ? 'bg-green-500' : 'bg-red-500',
             ]"
           ></span>
         </span>
-        {{ mockMode ? 'Simulación' : 'API Conectada' }}
+        <span>
+          {{
+            props.mockMode
+              ? 'Simulación'
+              : healthStatus === null
+                ? 'Comprobando...'
+                : healthStatus
+                  ? 'API Conectada'
+                  : 'API Offline'
+          }}
+        </span>
+        <button
+          v-if="!props.mockMode"
+          @click="checkHealth"
+          :disabled="checking"
+          class="ml-2 text-slate-400 hover:text-slate-600"
+          title="Refrescar estado"
+        >
+          <RefreshCw class="w-4 h-4" />
+        </button>
       </div>
     </div>
   </header>

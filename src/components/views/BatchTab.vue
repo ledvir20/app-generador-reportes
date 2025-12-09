@@ -3,9 +3,10 @@ import { ref } from 'vue'
 import { toast } from 'vue-sonner' // <-- Usamos Sonner
 import { Plus, Loader2, File as FileIcon, Trash2, Files, Download } from 'lucide-vue-next'
 import type { BatchResult } from '@/types'
+import { DocumentService } from '@/api/documentService'
 
 // Recibimos el modo simulación
-defineProps<{ mockMode: boolean }>()
+const props = defineProps<{ mockMode: boolean }>()
 
 // Estado
 const batchFiles = ref<File[]>([])
@@ -45,25 +46,33 @@ const processBatch = async () => {
   batchResult.value = null
 
   try {
-    // Simulación de latencia de red
-    await new Promise((r) => setTimeout(r, 3000))
+    let result: BatchResult
+    if (props.mockMode) {
+      // Simulación de latencia de red
+      await new Promise((r) => setTimeout(r, 3000))
 
-    // Mock Data (Datos simulados)
-    batchResult.value = {
-      total_procesados: batchFiles.value.length,
-      url_excel_consolidado: '#',
-      resultados: batchFiles.value.map((f, i) => ({
-        titulo: `RESOLUCIÓN Nº ${400 + i}-2025-MPH`,
-        nombre_norma: i % 2 === 0 ? 'DESIGNACIÓN DE FUNCIONARIO' : 'LICENCIA DE FUNCIONAMIENTO',
-        descripcion: 'Descripción autogenerada del documento procesado en lote...',
-        fecha_publicacion: '10/04/2025',
-        publication_type_id: 1,
-        category_id: 54,
-        ocr_usado: false,
-        nombre_archivo_original: f.name,
-        url_acceso_pdf: '#',
-      })),
+      // Mock Data (Datos simulados)
+      result = {
+        total_procesados: batchFiles.value.length,
+        url_excel_consolidado: '#',
+        resultados: batchFiles.value.map((f, i) => ({
+          titulo: `RESOLUCIÓN Nº ${400 + i}-2025-MPH`,
+          nombre_norma: i % 2 === 0 ? 'DESIGNACIÓN DE FUNCIONARIO' : 'LICENCIA DE FUNCIONAMIENTO',
+          descripcion: 'Descripción autogenerada del documento procesado en lote...',
+          fecha_publicacion: '10/04/2025',
+          publication_type_id: 1,
+          category_id: 54,
+          ocr_usado: false,
+          nombre_archivo_original: f.name,
+          url_acceso_pdf: '#',
+        })),
+      }
+    } else {
+      // Llamada real al servicio
+      result = await DocumentService.processBatch(batchFiles.value)
     }
+
+    batchResult.value = result
 
     // Limpiamos la cola de subida
     batchFiles.value = []
