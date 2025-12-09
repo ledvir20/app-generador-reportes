@@ -1,8 +1,11 @@
-// Interfaces basadas en tu OpenAPI
+// src/types/index.ts
+
 export interface ResolutionResult {
   titulo: string
+  // En tu openapi, nombre_norma puede ser null
   nombre_norma: string | null
-  descripcion: string
+  // descripcion no está en la lista de required, así que la hacemos opcional
+  descripcion?: string
   fecha_publicacion: string
   publication_type_id: number
   category_id: number
